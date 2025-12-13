@@ -2,7 +2,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2
 INCLUDES = -I/usr/include/qt5 -I/usr/include/qt5/QtCore -I/usr/include/qt5/QtSql -I/usr/include/qt5/QtWidgets -I/usr/include/qt5/QtGui
-LIBS = -lQt5Core -lQt5Sql -lQt5Widgets -lQt5Gui -lpq
+LIBS = -lQt5Core -lQt5Sql -lQt5Widgets -lQt5Gui
 MOC = moc-qt5
 SRCDIR = src
 OBJDIR = build
