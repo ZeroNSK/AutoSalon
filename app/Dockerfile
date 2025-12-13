@@ -35,7 +35,7 @@ RUN make
 RUN mkdir -p /var/log/supervisor
 
 # Создание конфигурационного файла supervisord
-RUN cat > /etc/supervisord.conf << 'EOF'
+COPY <<EOF /etc/supervisord.conf
 [supervisord]
 nodaemon=true
 logfile=/var/log/supervisor/supervisord.log
