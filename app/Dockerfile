@@ -21,8 +21,7 @@ RUN apk add --no-cache \
 
 # Установка noVNC для веб-доступа
 RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
-    git clone https://github.com/novnc/websockify /opt/websockify && \
-    ln -s /opt/websockify /opt/novnc/utils/websockify
+    git clone https://github.com/novnc/websockify /opt/websockify
 
 # Копирование исходного кода
 WORKDIR /app
