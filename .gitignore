@@ -46,8 +46,9 @@ Thumbs.db
 *.tmp
 *.temp
 *.log
-*.txt
 export_*.txt
+# Exclude generated text files
+*.txt
 ИСПРАВЛЕНО_GUI.md
 ЧТО_ПРОВЕРИТЬ.md
 ГОТОВО.md

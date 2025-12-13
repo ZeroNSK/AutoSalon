@@ -19,10 +19,7 @@ WORKDIR /app
 COPY . /app
 
 # Сборка приложения
-RUN mkdir -p /app/build && \
-    cd /app/build && \
-    cmake -DCMAKE_MAKE_PROGRAM=/usr/bin/make .. && \
-    /usr/bin/make
+RUN make
 
 # Создание конфигурации supervisor
 RUN mkdir -p /var/log/supervisor && \
@@ -51,7 +48,7 @@ stdout_logfile=/var/log/supervisor/x11vnc.log\n\
 stderr_logfile=/var/log/supervisor/x11vnc_err.log\n\
 \n\
 [program:autosalon]\n\
-command=/app/build/AutoSalon\n\
+command=/app/AutoSalon\n\
 autorestart=true\n\
 environment=DISPLAY=":1"\n\
 stdout_logfile=/var/log/supervisor/autosalon.log\n\
