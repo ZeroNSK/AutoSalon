@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  app:
+    build: ./app
+    container_name: autosalon_app
+    ports:
+      - "5900:5900"   # VNC-доступ
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=autosalon
+      - DB_USER=user
+      - DB_PASSWORD=pass
+      - DISPLAY=:1
+
+  db:
+    image: postgres:15
+    container_name: autosalon_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: autosalon
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
