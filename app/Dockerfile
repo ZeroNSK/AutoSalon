@@ -12,25 +12,7 @@ RUN apk add --no-cache \
     x11vnc \
     fluxbox \
     xterm \
-    supervisor \
-    python3 \
-    py3-pip \
-    py3-numpy \
-    wget \
-    unzip
-
-# Установка noVNC и websockify вручную
-RUN mkdir -p /opt && \
-    cd /opt && \
-    wget https://github.com/novnc/noVNC/archive/refs/heads/master.zip -O novnc.zip && \
-    unzip novnc.zip && \
-    mv noVNC-master novnc && \
-    rm novnc.zip && \
-    wget https://github.com/novnc/websockify/archive/refs/heads/main.zip -O websockify.zip && \
-    unzip websockify.zip && \
-    mv websockify-main websockify && \
-    rm websockify.zip && \
-    pip3 install /opt/websockify
+    supervisor
 
 # Копирование исходного кода
 WORKDIR /app
@@ -47,6 +29,6 @@ COPY supervisord.conf /etc/supervisord.conf
 
 ENV DISPLAY=:1
 
-EXPOSE 5900 6080
+EXPOSE 5900
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
