@@ -13,15 +13,24 @@ RUN apk add --no-cache \
     fluxbox \
     xterm \
     supervisor \
-    git \
     python3 \
     py3-pip \
-    nodejs \
-    npm
+    py3-numpy \
+    wget \
+    unzip
 
-# Установка noVNC для веб-доступа
-RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
-    git clone https://github.com/novnc/websockify /opt/websockify
+# Установка noVNC и websockify вручную
+RUN mkdir -p /opt && \
+    cd /opt && \
+    wget https://github.com/novnc/noVNC/archive/refs/heads/master.zip -O novnc.zip && \
+    unzip novnc.zip && \
+    mv noVNC-master novnc && \
+    rm novnc.zip && \
+    wget https://github.com/novnc/websockify/archive/refs/heads/main.zip -O websockify.zip && \
+    unzip websockify.zip && \
+    mv websockify-main websockify && \
+    rm websockify.zip && \
+    pip3 install /opt/websockify
 
 # Копирование исходного кода
 WORKDIR /app
