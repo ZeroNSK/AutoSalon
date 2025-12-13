@@ -59,3 +59,7 @@ TESTING_RESULTS.md
 TESTING.md
 DEPLOYMENT.md
 QUICK_DEPLOY.md
+.kiro/
+requirements.md
+design.md
+tasks.md
