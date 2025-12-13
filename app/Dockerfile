@@ -21,7 +21,8 @@ RUN apk add --no-cache \
 
 # Установка noVNC для веб-доступа
 RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
-    git clone https://github.com/novnc/websockify /opt/novnc/utils/websockify
+    git clone https://github.com/novnc/websockify /opt/websockify && \
+    ln -s /opt/websockify /opt/novnc/utils/websockify
 
 # Копирование исходного кода
 WORKDIR /app
@@ -60,7 +61,7 @@ stdout_logfile=/var/log/supervisor/x11vnc.log
 stderr_logfile=/var/log/supervisor/x11vnc_err.log
 
 [program:novnc]
-command=/opt/novnc/utils/websockify/websockify.py --web /opt/novnc 6080 localhost:5900
+command=python3 /opt/websockify/websockify.py --web /opt/novnc 6080 localhost:5900
 autorestart=true
 stdout_logfile=/var/log/supervisor/novnc.log
 stderr_logfile=/var/log/supervisor/novnc_err.log
