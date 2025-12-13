@@ -49,6 +49,8 @@ Thumbs.db
 export_*.txt
 # Exclude generated text files
 *.txt
+!setup.sh
+!fix-docker-permissions.sh
 ИСПРАВЛЕНО_GUI.md
 ЧТО_ПРОВЕРИТЬ.md
 ГОТОВО.md
