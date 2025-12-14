@@ -38,13 +38,26 @@ else
     echo "✅ Docker уже установлен"
 fi
 
-if ! command -v docker-compose &> /dev/null; then
-    echo "📥 Установка Docker Compose..."
-    sudo apt install -y docker-compose
-    check_success "Не удалось установить Docker Compose"
+# Проверяем Docker Compose (v1 или v2)
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+    echo "✅ Docker Compose v1 уже установлен"
+elif docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+    echo "✅ Docker Compose v2 уже установлен"
 else
-    echo "✅ Docker Compose уже установлен"
+    echo "📥 Установка Docker Compose..."
+    sudo apt install -y docker-compose-v2
+    if docker compose version &> /dev/null 2>&1; then
+        DOCKER_COMPOSE="docker compose"
+    else
+        sudo apt install -y docker-compose
+        DOCKER_COMPOSE="docker-compose"
+    fi
+    check_success "Не удалось установить Docker Compose"
 fi
+
+echo "📦 Используется: $DOCKER_COMPOSE"
 
 echo "🛠️ Установка дополнительных утилит..."
 sudo apt install -y git curl
@@ -67,19 +80,19 @@ check_success "Не удалось исправить права Docker"
 echo "🚀 Запуск приложения..."
 
 echo "🧹 Очистка предыдущих запусков..."
-docker-compose down -v 2>/dev/null || true
+$DOCKER_COMPOSE down -v 2>/dev/null || true
 
 echo "🔨 Сборка и запуск AutoSalon..."
-docker-compose up -d --build
+$DOCKER_COMPOSE up -d --build
 check_success "Не удалось запустить приложение"
 
 echo "⏳ Ожидание запуска контейнеров..."
 sleep 10
 
 echo "📊 Проверка статуса..."
-docker-compose ps
+$DOCKER_COMPOSE ps
 
-if docker-compose ps | grep -q "Up"; then
+if $DOCKER_COMPOSE ps | grep -q "Up"; then
     echo ""
     echo "🎉 УСПЕХ! AutoSalon успешно установлен и запущен!"
     echo "=============================================="
@@ -91,16 +104,16 @@ if docker-compose ps | grep -q "Up"; then
     echo "   👉 localhost:5900"
     echo ""
     echo "🔧 Полезные команды:"
-    echo "   Остановить:     docker-compose down"
-    echo "   Перезапустить:  docker-compose restart"
-    echo "   Логи:          docker-compose logs"
+    echo "   Остановить:     $DOCKER_COMPOSE down"
+    echo "   Перезапустить:  $DOCKER_COMPOSE restart"
+    echo "   Логи:          $DOCKER_COMPOSE logs"
     echo ""
     echo "💡 Если возникнут проблемы с правами Docker, выполните:"
     echo "   ./fix-docker-permissions.sh"
     echo ""
 else
     echo "⚠️ Приложение запущено, но возможны проблемы."
-    echo "Проверьте логи: docker-compose logs"
+    echo "Проверьте логи: $DOCKER_COMPOSE logs"
     echo ""
     echo "🌐 Попробуйте открыть: http://localhost:6080"
 fi
