@@ -5,17 +5,20 @@ services:
     build: ./app
     container_name: autosalon_app
     depends_on:
-      - db
+      db:
+        condition: service_started
     environment:
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=autosalon
       - DB_USER=user
       - DB_PASSWORD=pass
-      - DISPLAY=${DISPLAY}
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    network_mode: host
+      - DISPLAY=:1
+    ports:
+      - "5900:5900"  # VNC порт
+      - "6080:6080"  # noVNC веб-интерфейс
+    networks:
+      - app-network
 
   db:
     image: postgres:15
@@ -28,6 +31,17 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d autosalon"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   pgdata:

@@ -1,5 +1,40 @@
-app/build/
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+AutoSalon
+
+# Build directories
 build/
+app/build/
+cmake-build-*/
+
+# Qt specific
 *.pro.user
 *.pro.user.*
 *.qbs.user
@@ -11,31 +46,20 @@ qrc_*.cpp
 ui_*.h
 *.qmlc
 *.jsc
-*.slo
-*.lo
-*.o
-*.obj
-*.gch
-*.pch
-*.so
-*.dylib
-*.dll
-*.mod
-*.smod
-*.lai
-*.la
-*.a
-*.lib
-*.exe
-*.out
-*.app
-AutoSalon
-pgdata/
+Makefile*
+*build-*
+
+# Qt Creator
+CMakeLists.txt.user*
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -43,26 +67,49 @@ pgdata/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.*.yml
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite
+
+# Temporary files
 *.tmp
 *.temp
-*.log
-export_*.txt
-# Exclude generated text files
-*.txt
-!setup.sh
-!fix-docker-permissions.sh
-ИСПРАВЛЕНО_GUI.md
-ЧТО_ПРОВЕРИТЬ.md
-ГОТОВО.md
-ФИНАЛЬНЫЕ_ИСПРАВЛЕНИЯ.md
-TESTING_RESULTS.md
-КАК_ТЕСТИРОВАТЬ.md
-КАК_ОТКРЫТЬ_GUI.md
-ШПАРГАЛКА.md
-TESTING.md
-DEPLOYMENT.md
-QUICK_DEPLOY.md
+*_temp.*
+*_test.*
+*_backup.*
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary development files (Russian MD files)
+*ГОТОВО*.md
+*ИСПРАВЛЕНО*.md
+*КАК_*.md
+*ФИНАЛЬНЫЕ*.md
+*ЧТО_*.md
+*ШПАРГАЛКА*.md
+*ТЕСТИРОВАНИЕ*.md
+
+# Kiro specific - игнорируем всю папку .kiro
 .kiro/
-requirements.md
-design.md
-tasks.md
