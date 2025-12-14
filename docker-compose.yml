@@ -4,8 +4,6 @@ services:
   app:
     build: ./app
     container_name: autosalon_app
-    ports:
-      - "5900:5900"   # VNC-доступ
     depends_on:
       - db
     environment:
@@ -14,7 +12,10 @@ services:
       - DB_NAME=autosalon
       - DB_USER=user
       - DB_PASSWORD=pass
-      - DISPLAY=:1
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    network_mode: host
 
   db:
     image: postgres:15
