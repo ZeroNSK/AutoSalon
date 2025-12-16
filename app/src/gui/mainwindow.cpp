@@ -31,7 +31,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), selectedRow(-1) {
     model->select();
     
     // Установка заголовков
-    // Примечание: brand = производитель (Tesla, BMW), manufacturer = модель (Model 3, X5)
     model->setHeaderData(0, Qt::Horizontal, "ID");
     model->setHeaderData(1, Qt::Horizontal, "Производитель"); 
     model->setHeaderData(2, Qt::Horizontal, "Модель");       
