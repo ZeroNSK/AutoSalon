@@ -1,14 +1,13 @@
 #include "operations.h"
 
 // Валидация входных данных
-// Requirements: 6.2, 6.3, 8.2, 12.1
 bool Operations::validateCarData(const QString& brand,
                                 const QString& manufacturer,
                                 const QDate& releaseDate,
                                 int mileage,
                                 int price,
                                 QString& errorMessage) {
-    // Проверка пустых полей (Requirement 6.2)
+    // Проверка пустых полей
     if (brand.trimmed().isEmpty()) {
         errorMessage = "Марка автомобиля не может быть пустой.";
         return false;
@@ -19,19 +18,19 @@ bool Operations::validateCarData(const QString& brand,
         return false;
     }
     
-    // Проверка корректности даты (Requirement 6.3)
+    // Проверка корректности даты
     if (!releaseDate.isValid()) {
         errorMessage = "Дата выпуска должна быть в корректном формате.";
         return false;
     }
     
-    // Проверка бизнес-правил: неотрицательный пробег (Requirement 6.3)
+    // Проверка бизнес-правил: неотрицательный пробег
     if (mileage < 0) {
         errorMessage = "Пробег не может быть отрицательным.";
         return false;
     }
     
-    // Проверка бизнес-правил: положительная цена (Requirements 6.3, 8.2)
+    // Проверка бизнес-правил: положительная цена
     if (price <= 0) {
         errorMessage = "Цена должна быть положительным числом.";
         return false;
@@ -41,7 +40,6 @@ bool Operations::validateCarData(const QString& brand,
 }
 
 // Добавление новой записи об автомобиле
-// Requirements: 6.1, 6.5, 10.5, 12.3
 bool Operations::addCar(const QString& brand,
                        const QString& manufacturer,
                        const QDate& releaseDate,
@@ -56,10 +54,10 @@ bool Operations::addCar(const QString& brand,
     
     QSqlDatabase db = Database::getDatabase();
     
-    // Использование транзакции для обеспечения целостности данных (Requirement 12.3)
+    // Использование транзакции для обеспечения целостности данных 
     db.transaction();
     
-    // Использование prepared statements для защиты от SQL injection (Requirement 10.5)
+    // Использование prepared statements для защиты от SQL injection
     QSqlQuery query(db);
     query.prepare("INSERT INTO cars (brand, manufacturer, release_date, mileage, price) "
                   "VALUES (:brand, :manufacturer, :release_date, :mileage, :price)");
@@ -81,7 +79,6 @@ bool Operations::addCar(const QString& brand,
 }
 
 // Удаление всех автомобилей указанного производителя
-// Requirements: 7.1, 7.2, 10.5, 12.3
 int Operations::deleteByManufacturer(const QString& manufacturer) {
     if (manufacturer.trimmed().isEmpty()) {
         qWarning() << "Производитель не может быть пустым";
@@ -90,10 +87,10 @@ int Operations::deleteByManufacturer(const QString& manufacturer) {
     
     QSqlDatabase db = Database::getDatabase();
     
-    // Использование транзакции для обеспечения целостности данных (Requirement 12.3)
+    // Использование транзакции для обеспечения целостности данных 
     db.transaction();
     
-    // Использование prepared statements для защиты от SQL injection (Requirement 10.5)
+    // Использование prepared statements для защиты от SQL injection
     QSqlQuery query(db);
     query.prepare("DELETE FROM cars WHERE manufacturer = :manufacturer");
     query.bindValue(":manufacturer", manufacturer.trimmed());
@@ -112,14 +109,13 @@ int Operations::deleteByManufacturer(const QString& manufacturer) {
 }
 
 // Обновление цены для всех автомобилей указанной марки
-// Requirements: 8.1, 8.2, 8.3, 10.5, 12.3
 int Operations::updatePriceByBrand(const QString& brand, int newPrice) {
     if (brand.trimmed().isEmpty()) {
         qWarning() << "Марка не может быть пустой";
         return 0;
     }
     
-    // Проверка положительной цены (Requirement 8.2)
+    // Проверка положительной цены 
     if (newPrice <= 0) {
         qWarning() << "Цена должна быть положительным числом";
         return 0;
@@ -127,10 +123,10 @@ int Operations::updatePriceByBrand(const QString& brand, int newPrice) {
     
     QSqlDatabase db = Database::getDatabase();
     
-    // Использование транзакции для обеспечения целостности данных (Requirement 12.3)
+    // Использование транзакции для обеспечения целостности данных
     db.transaction();
     
-    // Использование prepared statements для защиты от SQL injection (Requirement 10.5)
+    // Использование prepared statements для защиты от SQL injection
     QSqlQuery query(db);
     query.prepare("UPDATE cars SET price = :price WHERE brand = :brand");
     query.bindValue(":price", newPrice);
@@ -150,7 +146,6 @@ int Operations::updatePriceByBrand(const QString& brand, int newPrice) {
 }
 
 // Экспорт данных в текстовый файл
-// Requirements: 4.1, 4.2, 4.3
 bool Operations::exportToFile(const QString& filename) {
     if (filename.trimmed().isEmpty()) {
         qWarning() << "Имя файла не может быть пустым";
@@ -180,7 +175,6 @@ bool Operations::exportToFile(const QString& filename) {
     int recordCount = 0;
     
     // Запись данных в файл в формате: "Brand: <brand>, Mileage: <mileage>, Price: <price>"
-    // Requirement 4.2
     while (query.next()) {
         QString brand = query.value(0).toString();
         int mileage = query.value(1).toInt();
@@ -196,21 +190,20 @@ bool Operations::exportToFile(const QString& filename) {
 }
 
 // Чтение содержимого файла
-// Requirements: 5.1, 5.2, 5.3, 5.4
 QString Operations::readFileContent(const QString& filename) {
     if (filename.trimmed().isEmpty()) {
         qWarning() << "Имя файла не может быть пустым";
         return QString();
     }
     
-    // Проверка существования файла (Requirement 5.2)
+    // Проверка существования файла 
     QFile file(filename);
     if (!file.exists()) {
         qWarning() << "Файл не найден:" << filename;
         return QString();
     }
     
-    // Открытие файла для чтения (Requirement 5.3)
+    // Открытие файла для чтения
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Не удалось открыть файл для чтения:" << filename;
         return QString();
@@ -218,7 +211,7 @@ QString Operations::readFileContent(const QString& filename) {
     
     QTextStream in(&file);
     
-    // Чтение всего содержимого файла с сохранением форматирования (Requirement 5.4)
+    // Чтение всего содержимого файла с сохранением форматирования
     QString content = in.readAll();
     
     file.close();
