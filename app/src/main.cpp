@@ -7,9 +7,9 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    // Подключение к БД (Requirement 1.1)
+    // Подключение к БД
     if (!Database::connect()) {
-        // Обработка ошибки подключения (Requirement 1.3)
+        // Обработка ошибки подключения 
         QMessageBox::critical(
             nullptr,
             "Ошибка подключения к базе данных",
@@ -20,9 +20,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Инициализация таблицы (Requirement 1.2)
+    // Инициализация таблицы 
     if (!Database::initTable()) {
-        // Обработка ошибки инициализации таблицы (Requirement 1.3)
+        // Обработка ошибки инициализации таблицы
         QMessageBox::critical(
             nullptr,
             "Ошибка инициализации базы данных",
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Создание и показ главного окна (Requirement 11.1)
+    // Создание и показ главного окна
     MainWindow w;
     w.show();
 
