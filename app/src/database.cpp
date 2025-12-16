@@ -49,13 +49,13 @@ bool Database::initTable() {
     qDebug() << "Таблица cars успешно создана/проверена";
     
     // Создание индексов для оптимизации производительности
-    // Индекс на brand для ускорения обновления цен (Requirement 8)
+    // Индекс на brand для ускорения обновления цен
     query.exec("CREATE INDEX IF NOT EXISTS idx_cars_brand ON cars(brand);");
     
-    // Индекс на manufacturer для ускорения удаления (Requirement 7)
+    // Индекс на manufacturer для ускорения удаления 
     query.exec("CREATE INDEX IF NOT EXISTS idx_cars_manufacturer ON cars(manufacturer);");
     
-    // Индекс на price для ускорения фильтрации (Requirement 3)
+    // Индекс на price для ускорения фильтрации
     query.exec("CREATE INDEX IF NOT EXISTS idx_cars_price ON cars(price);");
     
     qDebug() << "Индексы успешно созданы/проверены";
