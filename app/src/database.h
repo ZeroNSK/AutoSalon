@@ -13,4 +13,4 @@ public:
     static QSqlDatabase getDatabase();
 };
 
-#endif // DATABASE_H
+#endif
