@@ -24,7 +24,7 @@
 #include <QApplication>
 #include "login_dialog.h"
 
-MainWindow::MainWindow(const User& user, QWidget *parent) : QMainWindow(parent), currentUser(user), selectedRow(-1), isFilterActive(false), currentMinPrice(0), currentMaxPrice(0) {
+MainWindow::MainWindow(const User& user, QWidget *parent) : QMainWindow(parent), currentUser(user), selectedRow(-1), isFilterActive(false), currentMinPrice(0), currentMaxPrice(0), userWidget(nullptr) {
     setupUi();
     
      
@@ -173,7 +173,7 @@ void MainWindow::setupUi() {
     QHBoxLayout *bottomLayout = new QHBoxLayout();
     
      
-    QLabel *massOpsLabel = new QLabel("Массовые операции:", this);
+    massOpsLabel = new QLabel("Массовые операции:", this);
     massOpsLabel->setStyleSheet("font-weight: bold; color: #7f8c8d;");
     
     btnDelete = new QPushButton("Удалить по модели", this);
@@ -971,19 +971,24 @@ void MainWindow::onShowFile() {
 }
 
 void MainWindow::setupUserInterface() {
-     
-    QWidget *userWidget = new QWidget(this);
+    if (userWidget) {
+        statusBar()->removeWidget(userWidget);
+        delete userWidget;
+        userWidget = nullptr;
+    }
+    
+    statusBar()->clearMessage();
+    
+    userWidget = new QWidget(this);
     QHBoxLayout *userLayout = new QHBoxLayout(userWidget);
     userLayout->setContentsMargins(10, 5, 10, 5);
     
-     
     userInfoLabel = new QLabel(this);
     userInfoLabel->setText(QString("Пользователь: %1 (%2)")
                           .arg(currentUser.fullName)
                           .arg(currentUser.getRoleString()));
     userInfoLabel->setStyleSheet("font-weight: bold; color: #2c3e50; font-size: 14px;");
     
-     
     logoutButton = new QPushButton("Выйти", this);
     logoutButton->setToolTip("Выйти из системы");
     logoutButton->setMinimumHeight(30);
@@ -996,36 +1001,30 @@ void MainWindow::setupUserInterface() {
     userLayout->addStretch();
     userLayout->addWidget(logoutButton);
     
-     
     statusBar()->addPermanentWidget(userWidget);
-    
-     
     statusBar()->showMessage(PermissionManager::getRoleDescription(currentUser.role));
 }
 
 void MainWindow::updateButtonsForRole() {
     UserRole role = currentUser.role;
     
-     
     btnAdd->setVisible(PermissionManager::canAddCars(role));
     btnEditSelected->setVisible(PermissionManager::canEditCars(role));
     
-     
     btnDeleteSelected->setVisible(PermissionManager::canDeleteCar(role));
     btnDelete->setVisible(PermissionManager::canMassDelete(role));
     
-     
     btnUpdate->setVisible(PermissionManager::canUpdatePrices(role));
     
-     
+    bool hasMassOps = PermissionManager::canMassDelete(role) || PermissionManager::canUpdatePrices(role);
+    massOpsLabel->setVisible(hasMassOps);
+    
     btnExport->setVisible(PermissionManager::canExportData(role));
     btnShowFile->setVisible(PermissionManager::canViewFiles(role));
     
-     
     btnFilter->setVisible(PermissionManager::canFilterData(role));
-    btnRefresh->setVisible(true);  
+    btnRefresh->setVisible(true);
     
-     
     setWindowTitle(QString("Автосалон - Система управления [%1]").arg(currentUser.getRoleString()));
 }
 

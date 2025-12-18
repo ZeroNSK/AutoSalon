@@ -70,6 +70,7 @@ private:
      
     QPushButton *btnDelete;
     QPushButton *btnUpdate;
+    QLabel *massOpsLabel;
     
      
     QToolButton *btnSort;
@@ -92,6 +93,7 @@ private:
     User currentUser;
     QLabel *userInfoLabel;
     QPushButton *logoutButton;
+    QWidget *userWidget;
 };
 
 #endif  
