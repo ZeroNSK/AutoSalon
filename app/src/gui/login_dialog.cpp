@@ -15,7 +15,7 @@ LoginDialog::LoginDialog(QWidget *parent) : QDialog(parent) {
 void LoginDialog::setupUi() {
     setWindowTitle("Автосалон - Авторизация");
     setModal(true);
-    setFixedSize(460, 420);
+    setFixedSize(460, 480);
     
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setSpacing(12);
