@@ -82,6 +82,11 @@ User UserManager::authenticateUser(const QString& username, const QString& passw
     return User();  
 }
 
+bool UserManager::registerUser(const QString& username, const QString& password, 
+                              const QString& fullName, UserRole role) {
+    return createUser(username, password, fullName, role);
+}
+
 bool UserManager::createUser(const QString& username, const QString& password, 
                             const QString& fullName, UserRole role) {
     if (userExists(username)) {

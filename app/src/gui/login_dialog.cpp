@@ -1,10 +1,12 @@
 #include "login_dialog.h"
+#include "register_dialog.h"
 
 LoginDialog::LoginDialog(QWidget *parent) : QDialog(parent) {
     setupUi();
     
     connect(loginButton, &QPushButton::clicked, this, &LoginDialog::onLoginClicked);
     connect(cancelButton, &QPushButton::clicked, this, &LoginDialog::onCancelClicked);
+    connect(registerButton, &QPushButton::clicked, this, &LoginDialog::onRegisterClicked);
     connect(usernameEdit, &QLineEdit::textChanged, this, &LoginDialog::onUsernameChanged);
     connect(passwordEdit, &QLineEdit::textChanged, this, &LoginDialog::onUsernameChanged);
     connect(passwordEdit, &QLineEdit::returnPressed, this, &LoginDialog::onLoginClicked);
@@ -82,6 +84,11 @@ void LoginDialog::setupUi() {
     cancelButton->setMinimumWidth(100);
     cancelButton->setStyleSheet("background-color: #95a5a6; color: white; border: none; border-radius: 4px; font-weight: bold;");
     
+    registerButton = new QPushButton("Регистрация", this);
+    registerButton->setMinimumHeight(40);
+    registerButton->setMinimumWidth(110);
+    registerButton->setStyleSheet("background-color: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold;");
+    
     loginButton = new QPushButton("Войти", this);
     loginButton->setMinimumHeight(40);
     loginButton->setMinimumWidth(100);
@@ -89,6 +96,7 @@ void LoginDialog::setupUi() {
     loginButton->setEnabled(false);
     loginButton->setStyleSheet("background-color: #3498db; color: white; border: none; border-radius: 4px; font-weight: bold;");
     
+    buttonLayout->addWidget(registerButton);
     buttonLayout->addStretch();
     buttonLayout->addWidget(cancelButton);
     buttonLayout->addWidget(loginButton);
@@ -132,4 +140,14 @@ void LoginDialog::updateLoginButton() {
     bool hasUsername = !usernameEdit->text().trimmed().isEmpty();
     bool hasPassword = !passwordEdit->text().isEmpty();
     loginButton->setEnabled(hasUsername && hasPassword);
+}
+void LoginDialog::onRegisterClicked() {
+    RegisterDialog registerDialog(this);
+    if (registerDialog.exec() == QDialog::Accepted) {
+        User newUser = registerDialog.getRegisteredUser();
+        if (newUser.isValid()) {
+            authenticatedUser = newUser;
+            accept();
+        }
+    }
 }

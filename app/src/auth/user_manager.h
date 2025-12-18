@@ -19,7 +19,9 @@ public:
      
     static User authenticateUser(const QString& username, const QString& password);
     
-     
+    static bool registerUser(const QString& username, const QString& password, 
+                           const QString& fullName, UserRole role);
+    
     static bool createUser(const QString& username, const QString& password, 
                           const QString& fullName, UserRole role);
     

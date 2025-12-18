@@ -25,6 +25,7 @@ public:
 private slots:
     void onLoginClicked();
     void onCancelClicked();
+    void onRegisterClicked();
     void onUsernameChanged();
 
 private:
@@ -35,6 +36,7 @@ private:
     QLineEdit *passwordEdit;
     QPushButton *loginButton;
     QPushButton *cancelButton;
+    QPushButton *registerButton;
     QLabel *statusLabel;
     QLabel *roleInfoLabel;
     
