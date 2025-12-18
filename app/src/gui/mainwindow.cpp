@@ -20,35 +20,40 @@
 #include <QAction>
 #include <QToolButton>
 #include <QFrame>
+#include <QStatusBar>
+#include <QApplication>
+#include "login_dialog.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), selectedRow(-1) {
+MainWindow::MainWindow(const User& user, QWidget *parent) : QMainWindow(parent), currentUser(user), selectedRow(-1), isFilterActive(false), currentMinPrice(0), currentMaxPrice(0) {
     setupUi();
     
-    // Настройка модели данных
+     
     model = new QSqlTableModel(this);
     model->setTable("cars");
-    model->setEditStrategy(QSqlTableModel::OnManualSubmit); // Изменения только через код или кнопки
+    model->setEditStrategy(QSqlTableModel::OnManualSubmit);  
     model->select();
     
-    // Установка заголовков
-    // Примечание: brand = производитель (Tesla, BMW), manufacturer = модель (Model 3, X5)
+     
+     
     model->setHeaderData(0, Qt::Horizontal, "ID");
-    model->setHeaderData(1, Qt::Horizontal, "Производитель"); // brand -> Производитель
-    model->setHeaderData(2, Qt::Horizontal, "Модель");        // manufacturer -> Модель
+    model->setHeaderData(1, Qt::Horizontal, "Производитель");  
+    model->setHeaderData(2, Qt::Horizontal, "Модель");         
     model->setHeaderData(3, Qt::Horizontal, "Дата выпуска");
     model->setHeaderData(4, Qt::Horizontal, "Пробег");
     model->setHeaderData(5, Qt::Horizontal, "Цена");
 
     tableView->setModel(model);
-    tableView->hideColumn(0); // Скрываем ID
+    tableView->hideColumn(0);  
     tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     
-    // Подключение сигнала клика по строке
+     
     connect(tableView, &QTableView::clicked, this, &MainWindow::onTableRowClicked);
     
     setupTableHeader();
     setupContextMenu();
+    setupUserInterface();
     updateSelectedRowButtons();
+    updateButtonsForRole();
 }
 
 MainWindow::~MainWindow() {}
@@ -61,19 +66,19 @@ void MainWindow::setupUi() {
     mainLayout->setSpacing(15);
     mainLayout->setContentsMargins(20, 20, 20, 20);
     
-    // === ВЕРХНЯЯ ПАНЕЛЬ С ОСНОВНЫМИ ДЕЙСТВИЯМИ ===
+     
     QHBoxLayout *topLayout = new QHBoxLayout();
     
-    // Кнопка добавления (слева)
+     
     btnAdd = new QPushButton("+ Добавить автомобиль", this);
     btnAdd->setToolTip("Добавить новую запись об автомобиле в базу данных");
     btnAdd->setMinimumHeight(45);
     btnAdd->setMinimumWidth(200);
     
     topLayout->addWidget(btnAdd);
-    topLayout->addStretch(); // Растягиваем пространство
+    topLayout->addStretch();  
     
-    // Кнопки управления данными (справа)
+     
     btnFilter = new QPushButton("Фильтр по цене", this);
     btnFilter->setToolTip("Показать автомобили с ценой не выше указанной");
     btnFilter->setMinimumHeight(45);
@@ -89,16 +94,16 @@ void MainWindow::setupUi() {
     
     mainLayout->addLayout(topLayout);
     
-    // === КОНТЕЙНЕР ТАБЛИЦЫ С ЗАГОЛОВКОМ ===
+     
     QVBoxLayout *tableContainer = new QVBoxLayout();
     
-    // Заголовок таблицы с кнопкой сортировки
+     
     QHBoxLayout *tableHeaderLayout = new QHBoxLayout();
     
     QLabel *tableTitle = new QLabel("Список автомобилей", this);
     tableTitle->setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50;");
     
-    // Кнопка сортировки (выпадающее меню)
+     
     btnSort = new QToolButton(this);
     btnSort->setText("Сортировка");
     btnSort->setToolTip("Выберите способ сортировки данных");
@@ -106,7 +111,7 @@ void MainWindow::setupUi() {
     btnSort->setMinimumHeight(35);
     btnSort->setMinimumWidth(120);
     
-    // Создание меню сортировки
+     
     sortMenu = new QMenu(this);
     actionSortByPrice = sortMenu->addAction("По цене (возрастание)");
     actionSortByBrand = sortMenu->addAction("По производителю (А-Я)");
@@ -123,23 +128,23 @@ void MainWindow::setupUi() {
     
     tableContainer->addLayout(tableHeaderLayout);
     
-    // Таблица
+     
     tableView = new QTableView(this);
     
-    // ОТКЛЮЧЕНИЕ РЕДАКТИРОВАНИЯ В ТАБЛИЦЕ
+     
     tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     
-    // Включаем выбор строк
+     
     tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
     tableView->setSelectionMode(QAbstractItemView::SingleSelection);
     
-    // Включить чередующиеся строки
+     
     tableView->setAlternatingRowColors(true);
     
     tableContainer->addWidget(tableView);
     mainLayout->addLayout(tableContainer);
     
-    // === ПАНЕЛЬ ДЛЯ ВЫБРАННОЙ СТРОКИ (скрыта по умолчанию) ===
+     
     selectedRowFrame = new QFrame(this);
     selectedRowFrame->setFrameStyle(QFrame::StyledPanel);
     selectedRowFrame->setVisible(false);
@@ -164,10 +169,10 @@ void MainWindow::setupUi() {
     
     mainLayout->addWidget(selectedRowFrame);
     
-    // === НИЖНЯЯ ПАНЕЛЬ С МАССОВЫМИ ОПЕРАЦИЯМИ ===
+     
     QHBoxLayout *bottomLayout = new QHBoxLayout();
     
-    // Массовые операции (слева)
+     
     QLabel *massOpsLabel = new QLabel("Массовые операции:", this);
     massOpsLabel->setStyleSheet("font-weight: bold; color: #7f8c8d;");
     
@@ -186,7 +191,7 @@ void MainWindow::setupUi() {
     bottomLayout->addWidget(btnUpdate);
     bottomLayout->addStretch();
     
-    // Операции с файлами (справа)
+     
     btnExport = new QPushButton("Экспорт в файл", this);
     btnExport->setToolTip("Экспортировать данные об автомобилях в текстовый файл");
     btnExport->setMinimumHeight(40);
@@ -202,7 +207,7 @@ void MainWindow::setupUi() {
     
     mainLayout->addLayout(bottomLayout);
     
-    // === ПОДКЛЮЧЕНИЕ СИГНАЛОВ ===
+     
     connect(btnAdd, &QPushButton::clicked, this, &MainWindow::onAddCar);
     connect(btnEditSelected, &QPushButton::clicked, this, &MainWindow::onEditSelected);
     connect(btnDeleteSelected, &QPushButton::clicked, this, &MainWindow::onDeleteSelected);
@@ -213,7 +218,7 @@ void MainWindow::setupUi() {
     connect(btnShowFile, &QPushButton::clicked, this, &MainWindow::onShowFile);
     connect(btnRefresh, &QPushButton::clicked, this, &MainWindow::onRefreshTable);
     
-    // Подключение меню сортировки
+     
     connect(actionSortByPrice, &QAction::triggered, this, &MainWindow::onSortByPrice);
     connect(actionSortByBrand, &QAction::triggered, this, &MainWindow::onSortByBrand);
     connect(actionSortByDate, &QAction::triggered, this, &MainWindow::onSortByDate);
@@ -222,13 +227,13 @@ void MainWindow::setupUi() {
     
     setWindowTitle("Автосалон - Система управления");
     
-    // Установка размеров окна для VNC
+     
     setMinimumSize(1200, 700);
     resize(1400, 850);
-    // Не используем showMaximized() в VNC - устанавливаем фиксированный размер
+     
     setFixedSize(1400, 850);
     
-    // === УЛУЧШЕННЫЕ СТИЛИ ===
+     
     QString style = R"(
         /* Общий фон */
         QMainWindow {
@@ -376,7 +381,7 @@ void MainWindow::setupUi() {
     
     setStyleSheet(style);
     
-    // Установка имен объектов для стилей
+     
     btnAdd->setObjectName("btnAdd");
     btnDeleteSelected->setObjectName("btnDeleteSelected");
     btnDelete->setObjectName("btnDelete");
@@ -386,14 +391,14 @@ void MainWindow::setupUi() {
 }
 
 void MainWindow::setupTableHeader() {
-    // Дополнительная настройка заголовков таблицы
+     
     tableView->horizontalHeader()->setStretchLastSection(true);
     tableView->verticalHeader()->setVisible(false);
     tableView->setShowGrid(true);
 }
 
 void MainWindow::setupContextMenu() {
-    // Контекстное меню для таблицы (пока не используется, но можно расширить)
+     
     tableView->setContextMenuPolicy(Qt::CustomContextMenu);
 }
 
@@ -408,6 +413,22 @@ void MainWindow::updateSelectedRowButtons() {
     }
 }
 
+void MainWindow::updateFilterButtonText() {
+    if (isFilterActive) {
+        if (currentMinPrice > 0 && currentMaxPrice > 0) {
+            btnFilter->setText(QString("Фильтр: %1-%2 руб").arg(currentMinPrice).arg(currentMaxPrice));
+        } else if (currentMaxPrice > 0) {
+            btnFilter->setText(QString("Фильтр: до %1 руб").arg(currentMaxPrice));
+        } else if (currentMinPrice > 0) {
+            btnFilter->setText(QString("Фильтр: от %1 руб").arg(currentMinPrice));
+        }
+        btnFilter->setStyleSheet("background-color: #e67e22; color: white;");  
+    } else {
+        btnFilter->setText("Фильтр по цене");
+        btnFilter->setStyleSheet("");  
+    }
+}
+
 void MainWindow::onTableRowClicked(const QModelIndex &index) {
     if (index.isValid()) {
         selectedRow = index.row();
@@ -416,49 +437,55 @@ void MainWindow::onTableRowClicked(const QModelIndex &index) {
 }
 
 void MainWindow::onSortByPrice() {
-    model->setSort(5, Qt::AscendingOrder); // Колонка цены
+    model->setSort(5, Qt::AscendingOrder);  
     model->select();
 }
 
 void MainWindow::onSortByBrand() {
-    model->setSort(1, Qt::AscendingOrder); // Колонка производителя
+    model->setSort(1, Qt::AscendingOrder);  
     model->select();
 }
 
 void MainWindow::onSortByDate() {
-    model->setSort(3, Qt::DescendingOrder); // Колонка даты (новые сначала)
+    model->setSort(3, Qt::DescendingOrder);  
     model->select();
 }
 
 void MainWindow::onSortByMileage() {
-    model->setSort(4, Qt::AscendingOrder); // Колонка пробега
+    model->setSort(4, Qt::AscendingOrder);  
     model->select();
 }
 
 void MainWindow::onResetSort() {
-    model->setSort(-1, Qt::AscendingOrder); // Сброс сортировки
+    model->setSort(-1, Qt::AscendingOrder);  
     model->select();
 }
 
 void MainWindow::onRefreshTable() {
-    // Сброс всех фильтров (Requirements 2.2, 3.4)
+     
     model->setFilter("");
     
-    // Сброс сортировки
+     
     model->setSort(-1, Qt::AscendingOrder);
     
-    // Перезагрузка данных из базы данных (Requirements 2.2)
+     
     model->select();
     
-    // Сброс выбранной строки
+     
     selectedRow = -1;
     updateSelectedRowButtons();
     
-    // Обновление отображения
+     
     tableView->reset();
 }
 
 void MainWindow::onAddCar() {
+    if (!PermissionManager::canAddCars(currentUser.role)) {
+        QMessageBox::warning(this, "Доступ запрещен", 
+            "У вас нет прав для добавления автомобилей.");
+        return;
+    }
+    
     QDialog dialog(this);
     dialog.setWindowTitle("Добавить автомобиль");
     
@@ -471,8 +498,8 @@ void MainWindow::onAddCar() {
     QLineEdit *mileageEdit = new QLineEdit(&dialog);
     QLineEdit *priceEdit = new QLineEdit(&dialog);
     
-    form.addRow("Производитель:", brandEdit);  // brand -> Производитель (Tesla, BMW)
-    form.addRow("Модель:", manufEdit);          // manufacturer -> Модель (Model 3, X5)
+    form.addRow("Производитель:", brandEdit);   
+    form.addRow("Модель:", manufEdit);           
     form.addRow("Дата выпуска:", dateEdit);
     form.addRow("Пробег (км):", mileageEdit);
     form.addRow("Цена (руб):", priceEdit);
@@ -490,7 +517,7 @@ void MainWindow::onAddCar() {
         QString mileageStr = mileageEdit->text().trimmed();
         QString priceStr = priceEdit->text().trimmed();
         
-        // Проверка пустых полей (Requirements 6.2)
+         
         if (brand.isEmpty() || manuf.isEmpty() || dateStr.isEmpty() || 
             mileageStr.isEmpty() || priceStr.isEmpty()) {
             QMessageBox::warning(this, "Ошибка валидации", 
@@ -498,8 +525,8 @@ void MainWindow::onAddCar() {
             return;
         }
         
-        // Проверка формата даты (Requirements 6.3)
-        // Поддержка формата ДД.ММ.ГГГГ (день.месяц.год)
+         
+         
         QDate date = QDate::fromString(dateStr, "dd.MM.yyyy");
         if (!date.isValid()) {
             QMessageBox::warning(this, "Ошибка валидации", 
@@ -507,21 +534,21 @@ void MainWindow::onAddCar() {
             return;
         }
         
-        // Проверка года (не позже 2025)
+         
         if (date.year() > 2025) {
             QMessageBox::warning(this, "Ошибка валидации", 
                 "Год выпуска не может быть позже 2025.");
             return;
         }
         
-        // Проверка, что дата не в будущем
+         
         if (date > QDate::currentDate()) {
             QMessageBox::warning(this, "Ошибка валидации", 
                 "Дата выпуска не может быть в будущем.");
             return;
         }
         
-        // Проверка числовых значений (Requirements 6.3)
+         
         bool mileageOk, priceOk;
         int mileage = mileageStr.toInt(&mileageOk);
         int price = priceStr.toInt(&priceOk);
@@ -532,11 +559,11 @@ void MainWindow::onAddCar() {
             return;
         }
         
-        // Добавление записи (Requirements 6.1)
+         
         if (Operations::addCar(brand, manuf, date, mileage, price)) {
             QMessageBox::information(this, "Успех", 
                 QString("Автомобиль '%1' успешно добавлен в базу данных.").arg(brand));
-            onRefreshTable(); // Requirements 6.4
+            onRefreshTable();  
         } else {
             QMessageBox::critical(this, "Ошибка", 
                 "Не удалось добавить запись в базу данных. Проверьте подключение.");
@@ -545,13 +572,19 @@ void MainWindow::onAddCar() {
 }
 
 void MainWindow::onEditSelected() {
+    if (!PermissionManager::canEditCars(currentUser.role)) {
+        QMessageBox::warning(this, "Доступ запрещен", 
+            "У вас нет прав для редактирования автомобилей.");
+        return;
+    }
+    
     if (selectedRow < 0 || selectedRow >= model->rowCount()) {
         QMessageBox::information(this, "Информация", 
             "Выберите автомобиль в таблице для редактирования.");
         return;
     }
     
-    // Получить данные выбранной строки
+     
     int id = model->data(model->index(selectedRow, 0)).toInt();
     QString currentBrand = model->data(model->index(selectedRow, 1)).toString();
     QString currentManuf = model->data(model->index(selectedRow, 2)).toString();
@@ -559,7 +592,7 @@ void MainWindow::onEditSelected() {
     int currentMileage = model->data(model->index(selectedRow, 4)).toInt();
     int currentPrice = model->data(model->index(selectedRow, 5)).toInt();
     
-    // Диалог редактирования
+     
     QDialog dialog(this);
     dialog.setWindowTitle("Редактировать автомобиль");
     
@@ -600,7 +633,7 @@ void MainWindow::onEditSelected() {
         QString mileageStr = mileageEdit->text().trimmed();
         QString priceStr = priceEdit->text().trimmed();
         
-        // Проверка пустых полей
+         
         if (brand.isEmpty() || manuf.isEmpty() || dateStr.isEmpty() || 
             mileageStr.isEmpty() || priceStr.isEmpty()) {
             QMessageBox::warning(this, "Ошибка валидации", 
@@ -608,7 +641,7 @@ void MainWindow::onEditSelected() {
             return;
         }
         
-        // Проверка формата даты
+         
         QDate date = QDate::fromString(dateStr, "dd.MM.yyyy");
         if (!date.isValid()) {
             QMessageBox::warning(this, "Ошибка валидации", 
@@ -616,14 +649,14 @@ void MainWindow::onEditSelected() {
             return;
         }
         
-        // Проверка года
+         
         if (date.year() > 2025) {
             QMessageBox::warning(this, "Ошибка валидации", 
                 "Год выпуска не может быть позже 2025.");
             return;
         }
         
-        // Проверка числовых значений
+         
         bool mileageOk, priceOk;
         int mileage = mileageStr.toInt(&mileageOk);
         int price = priceStr.toInt(&priceOk);
@@ -640,7 +673,7 @@ void MainWindow::onEditSelected() {
             return;
         }
         
-        // Обновление записи
+         
         QSqlQuery query;
         query.prepare("UPDATE cars SET brand = :brand, manufacturer = :manufacturer, "
                      "release_date = :date, mileage = :mileage, price = :price WHERE id = :id");
@@ -663,18 +696,24 @@ void MainWindow::onEditSelected() {
 }
 
 void MainWindow::onDeleteSelected() {
+    if (!PermissionManager::canDeleteCar(currentUser.role)) {
+        QMessageBox::warning(this, "Доступ запрещен", 
+            "У вас нет прав для удаления автомобилей.");
+        return;
+    }
+    
     if (selectedRow < 0 || selectedRow >= model->rowCount()) {
         QMessageBox::information(this, "Информация", 
             "Выберите автомобиль в таблице для удаления.");
         return;
     }
     
-    // Получить данные выбранной строки
+     
     QString brand = model->data(model->index(selectedRow, 1)).toString();
     QString manufacturer = model->data(model->index(selectedRow, 2)).toString();
     int id = model->data(model->index(selectedRow, 0)).toInt();
     
-    // Диалог подтверждения
+     
     QMessageBox::StandardButton reply;
     reply = QMessageBox::question(this, "Подтверждение удаления", 
         QString("Вы уверены, что хотите удалить автомобиль:\n"
@@ -684,7 +723,7 @@ void MainWindow::onDeleteSelected() {
         QMessageBox::Yes | QMessageBox::No);
     
     if (reply == QMessageBox::Yes) {
-        // Удаление записи по ID
+         
         QSqlQuery query;
         query.prepare("DELETE FROM cars WHERE id = :id");
         query.bindValue(":id", id);
@@ -701,6 +740,12 @@ void MainWindow::onDeleteSelected() {
 }
 
 void MainWindow::onDeleteByManufacturer() {
+    if (!PermissionManager::canMassDelete(currentUser.role)) {
+        QMessageBox::warning(this, "Доступ запрещен", 
+            "У вас нет прав для массового удаления автомобилей.");
+        return;
+    }
+    
     bool ok;
     QString manuf = QInputDialog::getText(this, "Удаление по модели", 
                                          "Введите название модели:", 
@@ -709,7 +754,7 @@ void MainWindow::onDeleteByManufacturer() {
     if (ok && !manuf.trimmed().isEmpty()) {
         manuf = manuf.trimmed();
         
-        // Диалог подтверждения (Requirements 7.1)
+         
         QMessageBox::StandardButton reply;
         reply = QMessageBox::question(this, "Подтверждение удаления", 
             QString("Вы уверены, что хотите удалить все автомобили модели '%1'?\n"
@@ -717,21 +762,21 @@ void MainWindow::onDeleteByManufacturer() {
             QMessageBox::Yes | QMessageBox::No);
         
         if (reply == QMessageBox::Yes) {
-            // Выполнение удаления (Requirements 7.1)
+             
             int deletedCount = Operations::deleteByManufacturer(manuf);
             
             if (deletedCount > 0) {
-                // Успешное удаление (Requirements 7.3)
+                 
                 QMessageBox::information(this, "Успех", 
                     QString("Удалено записей: %1").arg(deletedCount));
                 onRefreshTable();
             } else if (deletedCount == 0) {
-                // Нет записей для удаления (Requirements 7.2)
+                 
                 QMessageBox::information(this, "Информация", 
                     QString("Не найдено автомобилей модели '%1'. "
                             "Записи не были удалены.").arg(manuf));
             } else {
-                // Ошибка удаления
+                 
                 QMessageBox::critical(this, "Ошибка", 
                     "Не удалось выполнить операцию удаления. Проверьте подключение к базе данных.");
             }
@@ -740,6 +785,12 @@ void MainWindow::onDeleteByManufacturer() {
 }
 
 void MainWindow::onUpdatePrice() {
+    if (!PermissionManager::canUpdatePrices(currentUser.role)) {
+        QMessageBox::warning(this, "Доступ запрещен", 
+            "У вас нет прав для изменения цен.");
+        return;
+    }
+    
     QDialog dialog(this);
     dialog.setWindowTitle("Обновить цену по марке");
     QFormLayout form(&dialog);
@@ -747,7 +798,7 @@ void MainWindow::onUpdatePrice() {
     QLineEdit *brandEdit = new QLineEdit(&dialog);
     QLineEdit *priceEdit = new QLineEdit(&dialog);
     
-    form.addRow("Производитель:", brandEdit);  // brand -> Производитель
+    form.addRow("Производитель:", brandEdit);   
     form.addRow("Новая цена (руб):", priceEdit);
     
     QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
@@ -760,14 +811,14 @@ void MainWindow::onUpdatePrice() {
         QString brand = brandEdit->text().trimmed();
         QString priceStr = priceEdit->text().trimmed();
         
-        // Проверка пустых полей
+         
         if (brand.isEmpty() || priceStr.isEmpty()) {
             QMessageBox::warning(this, "Ошибка валидации", 
                 "Все поля должны быть заполнены.");
             return;
         }
         
-        // Проверка числового значения (Requirements 8.2)
+         
         bool priceOk;
         int price = priceStr.toInt(&priceOk);
         
@@ -777,29 +828,29 @@ void MainWindow::onUpdatePrice() {
             return;
         }
         
-        // Проверка положительной цены (Requirements 8.2)
+         
         if (price <= 0) {
             QMessageBox::warning(this, "Ошибка валидации", 
                 "Цена должна быть положительным числом.");
             return;
         }
         
-        // Выполнение обновления (Requirements 8.1)
+         
         int updatedCount = Operations::updatePriceByBrand(brand, price);
         
         if (updatedCount > 0) {
-            // Успешное обновление (Requirements 8.4)
+             
             QMessageBox::information(this, "Успех", 
                 QString("Обновлено записей: %1\nНовая цена для марки '%2': %3 руб.")
                     .arg(updatedCount).arg(brand).arg(price));
             onRefreshTable();
         } else if (updatedCount == 0) {
-            // Нет записей для обновления (Requirements 8.3)
+             
             QMessageBox::information(this, "Информация", 
                 QString("Не найдено автомобилей марки '%1'. "
                         "Записи не были обновлены.").arg(brand));
         } else {
-            // Ошибка обновления
+             
             QMessageBox::critical(this, "Ошибка", 
                 "Не удалось выполнить операцию обновления. Проверьте подключение к базе данных.");
         }
@@ -813,12 +864,12 @@ void MainWindow::onFilterByPrice() {
         1000000, 0, 2147483647, 100000, &ok);
     
     if (ok) {
-        // Применение фильтра к модели (Requirements 3.1)
+         
         QString filter = QString("price <= %1").arg(maxPrice);
         model->setFilter(filter);
         model->select();
         
-        // Проверка наличия результатов (Requirements 3.3)
+         
         if (model->rowCount() == 0) {
             QMessageBox::information(this, "Результаты фильтрации", 
                 QString("Не найдено автомобилей с ценой <= %1 руб.").arg(maxPrice));
@@ -833,24 +884,30 @@ void MainWindow::onFilterByPrice() {
 }
 
 void MainWindow::onExportToFile() {
-    // Диалог выбора имени файла (Requirements 4.1)
+    if (!PermissionManager::canExportData(currentUser.role)) {
+        QMessageBox::warning(this, "Доступ запрещен", 
+            "У вас нет прав для экспорта данных.");
+        return;
+    }
+    
+     
     QString filename = QFileDialog::getSaveFileName(this, 
         "Экспорт данных в файл", 
         "export.txt",
         "Текстовые файлы (*.txt);;Все файлы (*)");
     
     if (!filename.isEmpty()) {
-        // Выполнение экспорта (Requirements 4.1)
+         
         if (Operations::exportToFile(filename)) {
             QFileInfo fileInfo(filename);
-            // Сообщение об успехе с путем к файлу (Requirements 4.4)
+             
             QMessageBox::information(this, "Успех", 
                 QString("Данные успешно экспортированы в файл:\n%1\n\n"
                         "Расположение: %2")
                     .arg(fileInfo.fileName())
                     .arg(fileInfo.absoluteFilePath()));
         } else {
-            // Обработка ошибок записи (Requirements 4.3)
+             
             QMessageBox::critical(this, "Ошибка экспорта", 
                 QString("Не удалось создать или записать файл:\n%1\n\n"
                         "Проверьте права доступа и наличие свободного места на диске.")
@@ -860,18 +917,24 @@ void MainWindow::onExportToFile() {
 }
 
 void MainWindow::onShowFile() {
-    // Диалог выбора файла (Requirements 5.1)
+    if (!PermissionManager::canViewFiles(currentUser.role)) {
+        QMessageBox::warning(this, "Доступ запрещен", 
+            "У вас нет прав для просмотра файлов.");
+        return;
+    }
+    
+     
     QString filename = QFileDialog::getOpenFileName(this, 
         "Выбрать файл для просмотра", 
         "",
         "Текстовые файлы (*.txt);;Все файлы (*)");
     
     if (!filename.isEmpty()) {
-        // Чтение содержимого файла (Requirements 5.1)
+         
         QString content = Operations::readFileContent(filename);
         
         if (content.isEmpty()) {
-            // Обработка ошибок чтения (Requirements 5.2, 5.3)
+             
             QFileInfo fileInfo(filename);
             if (!fileInfo.exists()) {
                 QMessageBox::warning(this, "Ошибка чтения", 
@@ -885,7 +948,7 @@ void MainWindow::onShowFile() {
                     "Файл пустой или не содержит данных.");
             }
         } else {
-            // Показ содержимого файла (Requirements 5.1, 5.4)
+             
             QDialog dialog(this);
             dialog.setWindowTitle(QString("Содержимое файла: %1").arg(QFileInfo(filename).fileName()));
             dialog.resize(600, 400);
@@ -903,6 +966,95 @@ void MainWindow::onShowFile() {
             layout->addWidget(closeBtn);
             
             dialog.exec();
+        }
+    }
+}
+
+void MainWindow::setupUserInterface() {
+     
+    QWidget *userWidget = new QWidget(this);
+    QHBoxLayout *userLayout = new QHBoxLayout(userWidget);
+    userLayout->setContentsMargins(10, 5, 10, 5);
+    
+     
+    userInfoLabel = new QLabel(this);
+    userInfoLabel->setText(QString("Пользователь: %1 (%2)")
+                          .arg(currentUser.fullName)
+                          .arg(currentUser.getRoleString()));
+    userInfoLabel->setStyleSheet("font-weight: bold; color: #2c3e50; font-size: 14px;");
+    
+     
+    logoutButton = new QPushButton("Выйти", this);
+    logoutButton->setToolTip("Выйти из системы");
+    logoutButton->setMinimumHeight(30);
+    logoutButton->setMinimumWidth(80);
+    logoutButton->setStyleSheet("QPushButton { background-color: #e74c3c; color: white; border: none; border-radius: 4px; padding: 5px 15px; font-size: 12px; }");
+    
+    connect(logoutButton, &QPushButton::clicked, this, &MainWindow::onLogout);
+    
+    userLayout->addWidget(userInfoLabel);
+    userLayout->addStretch();
+    userLayout->addWidget(logoutButton);
+    
+     
+    statusBar()->addPermanentWidget(userWidget);
+    
+     
+    statusBar()->showMessage(PermissionManager::getRoleDescription(currentUser.role));
+}
+
+void MainWindow::updateButtonsForRole() {
+    UserRole role = currentUser.role;
+    
+     
+    btnAdd->setVisible(PermissionManager::canAddCars(role));
+    btnEditSelected->setVisible(PermissionManager::canEditCars(role));
+    
+     
+    btnDeleteSelected->setVisible(PermissionManager::canDeleteCar(role));
+    btnDelete->setVisible(PermissionManager::canMassDelete(role));
+    
+     
+    btnUpdate->setVisible(PermissionManager::canUpdatePrices(role));
+    
+     
+    btnExport->setVisible(PermissionManager::canExportData(role));
+    btnShowFile->setVisible(PermissionManager::canViewFiles(role));
+    
+     
+    btnFilter->setVisible(PermissionManager::canFilterData(role));
+    btnRefresh->setVisible(true);  
+    
+     
+    setWindowTitle(QString("Автосалон - Система управления [%1]").arg(currentUser.getRoleString()));
+}
+
+void MainWindow::onLogout() {
+    QMessageBox::StandardButton reply;
+    reply = QMessageBox::question(this, "Выход из системы", 
+        "Вы уверены, что хотите выйти из системы?",
+        QMessageBox::Yes | QMessageBox::No);
+    
+    if (reply == QMessageBox::Yes) {
+         
+        hide();
+        
+         
+        LoginDialog loginDialog;
+        if (loginDialog.exec() == QDialog::Accepted) {
+             
+            User newUser = loginDialog.getAuthenticatedUser();
+            if (newUser.isValid()) {
+                 
+                currentUser = newUser;
+                setupUserInterface();
+                updateButtonsForRole();
+                show();  
+            } else {
+                QApplication::quit();  
+            }
+        } else {
+            QApplication::quit();  
         }
     }
 }

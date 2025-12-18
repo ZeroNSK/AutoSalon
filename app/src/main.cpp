@@ -2,14 +2,16 @@
 #include <QMessageBox>
 #include "database.h"
 #include "gui/mainwindow.h"
+#include "gui/login_dialog.h"
+#include "auth/user_manager.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    // Подключение к БД (Requirement 1.1)
+     
     if (!Database::connect()) {
-        // Обработка ошибки подключения (Requirement 1.3)
+         
         QMessageBox::critical(
             nullptr,
             "Ошибка подключения к базе данных",
@@ -20,9 +22,9 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Инициализация таблицы (Requirement 1.2)
+     
     if (!Database::initTable()) {
-        // Обработка ошибки инициализации таблицы (Requirement 1.3)
+         
         QMessageBox::critical(
             nullptr,
             "Ошибка инициализации базы данных",
@@ -33,8 +35,42 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Создание и показ главного окна (Requirement 11.1)
-    MainWindow w;
+     
+    if (!UserManager::initializeUserTable()) {
+        QMessageBox::critical(
+            nullptr,
+            "Ошибка инициализации системы пользователей",
+            "Не удалось создать таблицу пользователей.\n"
+            "Проверьте права доступа к базе данных.\n\n"
+            "Приложение будет закрыто."
+        );
+        return -1;
+    }
+
+     
+    UserManager::createDefaultUsers();
+
+     
+    LoginDialog loginDialog;
+    if (loginDialog.exec() != QDialog::Accepted) {
+         
+        return 0;
+    }
+
+     
+    User currentUser = loginDialog.getAuthenticatedUser();
+    if (!currentUser.isValid()) {
+        QMessageBox::critical(
+            nullptr,
+            "Ошибка авторизации",
+            "Не удалось получить данные пользователя.\n\n"
+            "Приложение будет закрыто."
+        );
+        return -1;
+    }
+
+     
+    MainWindow w(currentUser);
     w.show();
 
     return app.exec();

@@ -14,12 +14,14 @@
 #include <QAction>
 #include <QToolButton>
 #include <QFrame>
+#include "../auth/user.h"
+#include "../auth/permission_manager.h"
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(const User& user, QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
@@ -38,34 +40,38 @@ private slots:
     void onSortByDate();
     void onSortByMileage();
     void onResetSort();
+    void onLogout();
 
 private:
     void setupUi();
     void setupTableHeader();
     void setupContextMenu();
     void updateSelectedRowButtons();
+    void updateFilterButtonText();
+    void setupUserInterface();
+    void updateButtonsForRole();
     
     QSqlTableModel *model;
     QTableView *tableView;
     
-    // Основные кнопки действий
+     
     QPushButton *btnAdd;
     QPushButton *btnRefresh;
     QPushButton *btnFilter;
     QPushButton *btnExport;
     QPushButton *btnShowFile;
     
-    // Кнопки для выбранной строки (скрыты по умолчанию)
+     
     QPushButton *btnDeleteSelected;
     QPushButton *btnEditSelected;
     QFrame *selectedRowFrame;
     QLabel *selectedRowLabel;
     
-    // Кнопки массовых операций
+     
     QPushButton *btnDelete;
     QPushButton *btnUpdate;
     
-    // Меню сортировки
+     
     QToolButton *btnSort;
     QMenu *sortMenu;
     QAction *actionSortByPrice;
@@ -74,8 +80,18 @@ private:
     QAction *actionSortByMileage;
     QAction *actionResetSort;
     
-    // Текущая выбранная строка
+     
     int selectedRow;
+    
+     
+    bool isFilterActive;
+    int currentMinPrice;
+    int currentMaxPrice;
+    
+     
+    User currentUser;
+    QLabel *userInfoLabel;
+    QPushButton *logoutButton;
 };
 
-#endif // MAINWINDOW_H
+#endif  

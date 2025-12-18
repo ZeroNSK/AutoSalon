@@ -4,7 +4,7 @@
 bool Database::connect() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
     
-    // Получение параметров подключения из переменных окружения
+     
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     QString dbHost = env.value("DB_HOST", "db");
     QString dbPort = env.value("DB_PORT", "5432");
@@ -30,7 +30,7 @@ bool Database::connect() {
 bool Database::initTable() {
     QSqlQuery query;
     
-    // Создание таблицы с constraints
+     
     QString createTableQuery =
         "CREATE TABLE IF NOT EXISTS cars ("
         "id SERIAL PRIMARY KEY, "
@@ -48,14 +48,14 @@ bool Database::initTable() {
     
     qDebug() << "Таблица cars успешно создана/проверена";
     
-    // Создание индексов для оптимизации производительности
-    // Индекс на brand для ускорения обновления цен (Requirement 8)
+     
+     
     query.exec("CREATE INDEX IF NOT EXISTS idx_cars_brand ON cars(brand);");
     
-    // Индекс на manufacturer для ускорения удаления (Requirement 7)
+     
     query.exec("CREATE INDEX IF NOT EXISTS idx_cars_manufacturer ON cars(manufacturer);");
     
-    // Индекс на price для ускорения фильтрации (Requirement 3)
+     
     query.exec("CREATE INDEX IF NOT EXISTS idx_cars_price ON cars(price);");
     
     qDebug() << "Индексы успешно созданы/проверены";
