@@ -1,18 +1,18 @@
 #!/bin/bash
 
-echo "🚀 AutoSalon - Универсальная установка"
+echo "AutoSalon - Универсальная установка"
 echo "====================================="
 
 # Проверка прав
 if [ "$EUID" -eq 0 ]; then
-    echo "❌ Не запускайте этот скрипт с sudo!"
+    echo "Не запускайте этот скрипт с sudo!"
     echo "Просто выполните: ./install.sh"
     exit 1
 fi
 
 check_success() {
     if [ $? -ne 0 ]; then
-        echo "❌ Ошибка: $1"
+        echo "Ошибка: $1"
         exit 1
     fi
 }
@@ -73,7 +73,7 @@ install_docker() {
     case $OS in
         "macos")
             if ! command -v docker &> /dev/null; then
-                echo "❌ Docker не найден. Установите Docker Desktop для macOS:"
+                echo "Docker не найден. Установите Docker Desktop для macOS:"
                 echo "   https://www.docker.com/products/docker-desktop"
                 echo "   Или используйте: brew install --cask docker"
                 exit 1
@@ -82,7 +82,7 @@ install_docker() {
             ;;
         "ubuntu")
             if ! command -v docker &> /dev/null; then
-                echo "📥 Установка Docker для Ubuntu/Debian..."
+                echo "Установка Docker для Ubuntu/Debian..."
                 sudo apt update
                 sudo apt install -y docker.io
                 check_success "Не удалось установить Docker"
@@ -92,12 +92,12 @@ install_docker() {
                 sudo usermod -aG docker $USER
                 sudo chmod 666 /var/run/docker.sock
             else
-                echo "✅ Docker уже установлен"
+                echo "Docker уже установлен"
             fi
             ;;
         "kali")
             if ! command -v docker &> /dev/null; then
-                echo "📥 Установка Docker для Kali Linux..."
+                echo "Установка Docker для Kali Linux..."
                 sudo apt update
                 sudo apt install -y docker.io
                 check_success "Не удалось установить Docker"
@@ -106,29 +106,29 @@ install_docker() {
                 sudo systemctl enable docker
                 sudo usermod -aG docker $USER
                 sudo chmod 666 /var/run/docker.sock
-                echo "🔧 Настройка Docker для Kali Linux..."
+                echo "Настройка Docker для Kali Linux..."
             else
-                echo "✅ Docker уже установлен"
+                echo "Docker уже установлен"
             fi
             ;;
         "arch")
             if ! command -v docker &> /dev/null; then
-                echo "📥 Установка Docker для Arch Linux..."
+                echo "Установка Docker для Arch Linux..."
                 sudo pacman -Sy --noconfirm docker docker-compose
                 check_success "Не удалось установить Docker"
                 
                 sudo systemctl start docker
                 sudo systemctl enable docker
                 sudo usermod -aG docker $USER
-                echo "🔧 Настройка Docker для Arch Linux..."
-                echo "⚠️ Возможно потребуется перелогиниться для применения прав группы docker"
+                echo "Настройка Docker для Arch Linux..."
+                echo "Возможно потребуется перелогиниться для применения прав группы docker"
             else
-                echo "✅ Docker уже установлен"
+                echo "Docker уже установлен"
             fi
             ;;
         "centos")
             if ! command -v docker &> /dev/null; then
-                echo "📥 Установка Docker для CentOS/RHEL/Fedora..."
+                echo "Установка Docker для CentOS/RHEL/Fedora..."
                 if command -v dnf &> /dev/null; then
                     sudo dnf install -y docker docker-compose
                 else
@@ -140,12 +140,12 @@ install_docker() {
                 sudo systemctl enable docker
                 sudo usermod -aG docker $USER
             else
-                echo "✅ Docker уже установлен"
+                echo "Docker уже установлен"
             fi
             ;;
         *)
-            echo "❌ Неподдерживаемая ОС: $OS"
-            echo "💡 Для установки на вашей системе:"
+            echo "   Неподдерживаемая ОС: $OS"
+            echo "   Для установки на вашей системе:"
             echo "   1. Установите Docker вручную"
             echo "   2. Установите Docker Compose"
             echo "   3. Запустите: docker-compose up -d --build"
