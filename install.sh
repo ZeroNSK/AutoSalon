@@ -22,8 +22,37 @@ detect_os() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         echo "macos"
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        if command -v apt &> /dev/null; then
+        # Проверяем специфичные файлы дистрибутивов
+        if [ -f /etc/arch-release ]; then
+            echo "arch"
+        elif [ -f /etc/os-release ]; then
+            . /etc/os-release
+            case "$ID" in
+                "kali")
+                    echo "kali"
+                    ;;
+                "ubuntu"|"debian")
+                    echo "ubuntu"
+                    ;;
+                "fedora"|"centos"|"rhel")
+                    echo "centos"
+                    ;;
+                *)
+                    if command -v apt &> /dev/null; then
+                        echo "ubuntu"
+                    elif command -v pacman &> /dev/null; then
+                        echo "arch"
+                    elif command -v yum &> /dev/null || command -v dnf &> /dev/null; then
+                        echo "centos"
+                    else
+                        echo "linux"
+                    fi
+                    ;;
+            esac
+        elif command -v apt &> /dev/null; then
             echo "ubuntu"
+        elif command -v pacman &> /dev/null; then
+            echo "arch"
         elif command -v yum &> /dev/null; then
             echo "centos"
         else
@@ -53,7 +82,7 @@ install_docker() {
             ;;
         "ubuntu")
             if ! command -v docker &> /dev/null; then
-                echo "📥 Установка Docker..."
+                echo "📥 Установка Docker для Ubuntu/Debian..."
                 sudo apt update
                 sudo apt install -y docker.io
                 check_success "Не удалось установить Docker"
@@ -66,8 +95,60 @@ install_docker() {
                 echo "✅ Docker уже установлен"
             fi
             ;;
+        "kali")
+            if ! command -v docker &> /dev/null; then
+                echo "📥 Установка Docker для Kali Linux..."
+                sudo apt update
+                sudo apt install -y docker.io
+                check_success "Не удалось установить Docker"
+                
+                sudo systemctl start docker
+                sudo systemctl enable docker
+                sudo usermod -aG docker $USER
+                sudo chmod 666 /var/run/docker.sock
+                echo "🔧 Настройка Docker для Kali Linux..."
+            else
+                echo "✅ Docker уже установлен"
+            fi
+            ;;
+        "arch")
+            if ! command -v docker &> /dev/null; then
+                echo "📥 Установка Docker для Arch Linux..."
+                sudo pacman -Sy --noconfirm docker docker-compose
+                check_success "Не удалось установить Docker"
+                
+                sudo systemctl start docker
+                sudo systemctl enable docker
+                sudo usermod -aG docker $USER
+                echo "🔧 Настройка Docker для Arch Linux..."
+                echo "⚠️ Возможно потребуется перелогиниться для применения прав группы docker"
+            else
+                echo "✅ Docker уже установлен"
+            fi
+            ;;
+        "centos")
+            if ! command -v docker &> /dev/null; then
+                echo "📥 Установка Docker для CentOS/RHEL/Fedora..."
+                if command -v dnf &> /dev/null; then
+                    sudo dnf install -y docker docker-compose
+                else
+                    sudo yum install -y docker docker-compose
+                fi
+                check_success "Не удалось установить Docker"
+                
+                sudo systemctl start docker
+                sudo systemctl enable docker
+                sudo usermod -aG docker $USER
+            else
+                echo "✅ Docker уже установлен"
+            fi
+            ;;
         *)
             echo "❌ Неподдерживаемая ОС: $OS"
+            echo "💡 Для установки на вашей системе:"
+            echo "   1. Установите Docker вручную"
+            echo "   2. Установите Docker Compose"
+            echo "   3. Запустите: docker-compose up -d --build"
             exit 1
             ;;
     esac
@@ -87,8 +168,8 @@ check_docker_compose() {
                 echo "❌ Docker Compose не найден. Установите Docker Desktop"
                 exit 1
                 ;;
-            "ubuntu")
-                echo "📥 Установка Docker Compose..."
+            "ubuntu"|"kali")
+                echo "📥 Установка Docker Compose для $OS..."
                 sudo apt install -y docker-compose-v2
                 if docker compose version &> /dev/null 2>&1; then
                     DOCKER_COMPOSE="docker compose"
@@ -96,6 +177,24 @@ check_docker_compose() {
                     sudo apt install -y docker-compose
                     DOCKER_COMPOSE="docker-compose"
                 fi
+                check_success "Не удалось установить Docker Compose"
+                ;;
+            "arch")
+                echo "✅ Docker Compose уже установлен с пакетом docker-compose"
+                if docker compose version &> /dev/null 2>&1; then
+                    DOCKER_COMPOSE="docker compose"
+                else
+                    DOCKER_COMPOSE="docker-compose"
+                fi
+                ;;
+            "centos")
+                echo "📥 Установка Docker Compose для CentOS/RHEL/Fedora..."
+                if command -v dnf &> /dev/null; then
+                    sudo dnf install -y docker-compose
+                else
+                    sudo yum install -y docker-compose
+                fi
+                DOCKER_COMPOSE="docker-compose"
                 check_success "Не удалось установить Docker Compose"
                 ;;
         esac
@@ -111,7 +210,7 @@ open_browser() {
         "macos")
             open "$url" 2>/dev/null || echo "⚠️ Не удалось автоматически открыть браузер"
             ;;
-        "ubuntu")
+        "ubuntu"|"kali"|"arch"|"centos")
             if command -v xdg-open &> /dev/null; then
                 xdg-open "$url" 2>/dev/null || echo "⚠️ Не удалось автоматически открыть браузер"
             elif command -v firefox &> /dev/null; then
@@ -120,6 +219,8 @@ open_browser() {
                 google-chrome "$url" 2>/dev/null &
             elif command -v chromium-browser &> /dev/null; then
                 chromium-browser "$url" 2>/dev/null &
+            elif command -v chromium &> /dev/null; then
+                chromium "$url" 2>/dev/null &
             else
                 echo "⚠️ Браузер не найден. Откройте вручную: $url"
             fi
