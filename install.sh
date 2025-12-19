@@ -37,6 +37,8 @@ detect_os() {
 OS=$(detect_os)
 echo "🔍 Обнаружена ОС: $OS"
 
+
+
 # Установка Docker в зависимости от ОС
 install_docker() {
     case $OS in

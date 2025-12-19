@@ -22,6 +22,7 @@
 #include <QFrame>
 #include <QStatusBar>
 #include <QApplication>
+#include <QDesktopWidget>
 #include "login_dialog.h"
 
 MainWindow::MainWindow(const User& user, QWidget *parent) : QMainWindow(parent), currentUser(user), selectedRow(-1), isFilterActive(false), currentMinPrice(0), currentMaxPrice(0), userWidget(nullptr) {
@@ -228,10 +229,16 @@ void MainWindow::setupUi() {
     setWindowTitle("Автосалон - Система управления");
     
      
-    setMinimumSize(1200, 700);
-    resize(1400, 850);
+    setMinimumSize(1000, 600);
+    resize(1200, 750);
      
-    setFixedSize(1400, 850);
+    setFixedSize(1200, 750);
+    
+    // Центрируем окно на экране (чуть выше центра)
+    QRect screenGeometry = QApplication::desktop()->screenGeometry();
+    int x = (screenGeometry.width() - width()) / 2;
+    int y = (screenGeometry.height() - height()) / 2 - 80; // Поднимаем на 80 пикселей выше
+    move(x, y);
     
      
     QString style = R"(
